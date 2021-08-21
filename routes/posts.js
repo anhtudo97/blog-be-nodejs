@@ -1,8 +1,9 @@
 const router = require("express").Router();
 const Post = require("../models/Post");
+const verify = require("../verifyToken");
 
 // CREATE POST
-router.post("/", async(req, res) => {
+router.post("/", verify, async(req, res) => {
     const newPost = new Post(req.body);
     try {
         const savedPost = await newPost.save();
@@ -13,7 +14,7 @@ router.post("/", async(req, res) => {
 });
 
 // UPDATE POST
-router.put("/:id", async(req, res) => {
+router.put("/:id", verify, async(req, res) => {
     try {
         const post = await Post.findById(req.params.id);
         if (post.username === req.body.username) {
@@ -34,7 +35,7 @@ router.put("/:id", async(req, res) => {
 });
 
 // DELETE POST
-router.delete("/:id", async(req, res) => {
+router.delete("/:id", verify, async(req, res) => {
     try {
         const post = await Post.findById(req.params.id);
         if (post.username === req._construct) {
@@ -52,7 +53,7 @@ router.delete("/:id", async(req, res) => {
 });
 
 // GET POST
-router.get("/:id", async(req, res) => {
+router.get("/:id", verify, async(req, res) => {
     try {
         const post = await Post.findById(req.params.id);
         res.status(200).json(post);

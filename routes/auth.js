@@ -1,27 +1,35 @@
 const router = require("express").Router();
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 // REGISTER
 router.post("/register", async(req, res) => {
-    try {
-        const salt = await bcrypt.genSalt(15);
-        const hashedPass = await bcrypt.hash(req.body.password, salt);
-        const newUser = new User({
-            username: req.body.username,
-            email: req.body.email,
-            password: hashedPass,
-        });
+    const user = await User.findOne({ username: req.body.username });
 
-        const user = await newUser.save();
-        res.status(200).json(user);
-    } catch (err) {
-        res.status(500).json(err);
+    if (user) {
+        res.status(400).json({ message: "User is existing", status: 400 });
+    } else {
+        try {
+            const salt = await bcrypt.genSalt(15);
+            const hashedPass = await bcrypt.hash(req.body.password, salt);
+            const newUser = new User({
+                username: req.body.username,
+                email: req.body.email,
+                password: hashedPass,
+            });
+
+            const user = await newUser.save();
+            res.status(200).json(user);
+        } catch (err) {
+            res.status(500).json(err);
+        }
     }
 });
 
 // LOGIN
 router.post("/login", async(req, res) => {
+    console.log(req.body);
     try {
         const user = await User.findOne({ username: req.body.username });
         !user && res.status(400).json("Wrong credentials!");
@@ -29,10 +37,14 @@ router.post("/login", async(req, res) => {
         const validated = await bcrypt.compare(req.body.password, user.password);
         !validated && res.status(400).json("Wrong credentials!");
 
-        const { password, ...others } = user._doc;
-        res.status(200).json(others);
+        const accessToken = jwt.sign({ id: user._id }, process.env.SECRET_KEY, {
+            expiresIn: "5d",
+        });
+
+        const { password, ...info } = user._doc;
+        res.status(200).json({...info, accessToken });
     } catch (err) {
-        res.status(500).json(err);
+        res.status(500).json({ message: err.message });
     }
 });
 

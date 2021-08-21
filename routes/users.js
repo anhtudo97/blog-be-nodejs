@@ -2,9 +2,10 @@ const router = require("express").Router();
 const User = require("../models/User");
 const Post = require("../models/Post");
 const bcrypt = require("bcrypt");
+const verify = require("../verifyToken");
 
 // update user
-router.put("/:id", async(req, res) => {
+router.put("/:id", verify, async(req, res) => {
     if (req.body.userId === req.params.id) {
         if (req.body.password) {
             const salt = await bcrypt.genSalt(15);
@@ -26,7 +27,7 @@ router.put("/:id", async(req, res) => {
 });
 
 // Delete account
-router.delete("/:id", async function(req, res) {
+router.delete("/:id", verify, async function(req, res) {
     if (req.params.id === req.body.userId) {
         try {
             const user = await User.findById(req.params.id);
@@ -46,11 +47,11 @@ router.delete("/:id", async function(req, res) {
 });
 
 // get user
-router.get("/:id", async(req, res) => {
+router.get("/:id", verify, async(req, res) => {
     try {
         const user = User.findById(req.params.id);
-        const { password, ...others } = user._doc;
-        res.status(200).json(others);
+        const { password, ...infor } = user._doc;
+        res.status(200).json(infor);
     } catch (err) {
         res.status(500).json(err);
     }
